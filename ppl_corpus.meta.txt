@@ -1,0 +1,3 @@
+source: wikitext-2-raw-v1/test (local parquet)
+tokenizer: /Users/david/llm/Qwen3.8-Flash-Next-src
+tokens: 297053
