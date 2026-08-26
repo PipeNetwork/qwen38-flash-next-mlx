@@ -112,6 +112,8 @@ the {windows} windows the build lost outright.
 
 {recommendation}
 
+{ablation}
+
 Greedy generation (a collapse detector, not a ranking) is coherent on every published build.
 
 ## License
@@ -161,10 +163,29 @@ def main() -> int:
             f"dominated and is published for completeness. 6-bit and 8-bit are statistically indistinguishable "
             f"from bfloat16 on this corpus.")
 
+    ablation = ""
+    ABL = [("abl-4bit-hc8", "hyper-connection read gates (`input_mix_weight_down/up`, 0.6B)"),
+           ("abl-4bit-attn8", "attention, DeltaNet, shared experts, PLE projections (~2.3B)"),
+           ("abl-4bit-embed8", "`embed_tokens` and `lm_head` (1.3B)")]
+    if all(n in res for n, _ in ABL) and all(n in ppl for n in ORDER):
+        from ppl_table import paired
+        u = "Qwen3.8-Flash-Next-MLX-4bit"
+        lines = ["| everything 4-bit except… | perplexity | vs bfloat16 |", "|---|---:|---:|",
+                 f"| — (uniform 4-bit) | {ppl[u]:.4f} | {pct(u):+.1f}% |"]
+        for n, what in ABL:
+            lines.append(f"| {what} at 8-bit | {res[n]['perplexity']:.4f} | {100*(res[n]['perplexity']/ppl[ANCHOR]-1):+.1f}% |")
+        m = "Qwen3.8-Flash-Next-MLX-mixed-4_8bit"
+        lines.append(f"| all three at 8-bit (= mixed-4_8bit) | {ppl[m]:.4f} | {pct(m):+.1f}% |")
+        ablation = ("### Where the 4-bit damage comes from\n\nOne group at a time moved back to 8-bit from the uniform "
+                    "4-bit build, same windows, same runtime (the ablation builds are not published):\n\n" + "\n".join(lines) +
+                    "\n\nNo single group is responsible: the hyper-connection gates and the attention/DeltaNet "
+                    "projections each carry about half of the loss and the effects are roughly additive, so every "
+                    "non-expert weight is worth its 8 bits. Per parameter, these ~4B weights are roughly 20x more "
+                    "quantization-sensitive than the 121B of routed experts.")
     card = CARD.format(upstream=UPSTREAM, code_repo=CODE_REPO, pr=PR, repo_name=args.repo.split("/")[-1],
                        bits_tag=f"{expert_bits}-bit", recipe=recipe, gb=gb, expert_bits=expert_bits,
                        ngram_bits=ngram_bits, other_bits=other_bits, tokens=a["tokens"], windows=a["windows"],
-                       seq=a["seq_len"], table=table, recommendation=recommendation)
+                       seq=a["seq_len"], table=table, recommendation=recommendation, ablation=ablation)
     (d / "README.md").write_text(card)
     files = sorted(p.name for p in d.iterdir() if p.is_file())
     print(f"repo   {args.repo}\ndir    {d}\nfiles  {len(files)}, {gb:.1f} GB\n")

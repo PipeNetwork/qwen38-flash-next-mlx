@@ -106,6 +106,22 @@ bootstrap. Results are in the model cards and below.
 | [4bit](https://huggingface.co/pipenetwork/Qwen3.8-Flash-Next-MLX-4bit) | 103.8 GB | 5.3914 | +0.1872 [+0.1778, +0.1968] | 145/145 |
 <!-- /measurements -->
 
+**6-bit and 8-bit are statistically indistinguishable from bfloat16; uniform 4-bit costs +20.6% while the mixed 4/8-bit build costs +1.3% — the recommended build below 150 GB.**
+
+### Where the 4-bit damage comes from
+
+One group at a time moved back to 8-bit from the uniform 4-bit build, same windows, same runtime (the ablation builds are not published):
+
+| everything 4-bit except… | perplexity | vs bfloat16 |
+|---|---:|---:|
+| — (uniform 4-bit) | 5.3914 | +20.6% |
+| hyper-connection read gates (`input_mix_weight_down/up`, 0.6B) at 8-bit | 4.9744 | +11.3% |
+| attention, DeltaNet, shared experts, PLE projections (~2.3B) at 8-bit | 4.8969 | +9.5% |
+| `embed_tokens` and `lm_head` (1.3B) at 8-bit | 5.2843 | +18.2% |
+| all three at 8-bit (= mixed-4_8bit) | 4.5286 | +1.3% |
+
+No single group is responsible: the hyper-connection gates and the attention/DeltaNet projections each carry about half of the loss and the effects are roughly additive, so every non-expert weight is worth its 8 bits. Per parameter, these ~4B weights are roughly 20x more quantization-sensitive than the 121B of routed experts.
+
 ## Layout
 
 | path | what |
