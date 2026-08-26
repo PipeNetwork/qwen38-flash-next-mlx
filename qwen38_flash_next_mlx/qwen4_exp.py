@@ -2,7 +2,6 @@
 # Composants inedits vs qwen3_next : QSA sparse attention, gated residual
 # (hyper-connections), n-gram / PLE embedding shardé, projections deltanet splittées.
 
-from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field

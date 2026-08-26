@@ -62,6 +62,9 @@ blocks score exactly 0.0, and `torch.topk` and `mx.argpartition` break the tie d
 reference is not device-deterministic there either, so the test excludes those rows rather than
 pretend they are decidable.
 
+The published layout also loads through **stock mlx-lm** (`mlx_lm.load(repo, trust_remote_code=True)`, which imports the
+bundled `qwen4_exp.py` via `model_file`) — `scripts/check_stock_loader.py` verifies that path and generates.
+
 On the real checkpoint the bf16 model loads through this runtime with zero missing and zero
 unexpected tensors, and generates coherently (*The capital of France is* → `Paris`; merge-intervals
 code; Rayleigh scattering in two sentences) at ~24 tok/s, 354 GB resident.

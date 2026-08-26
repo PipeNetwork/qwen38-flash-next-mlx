@@ -22,3 +22,9 @@ Found by tiny-config parity against `transformers` 5.16 (`tests/test_parity.py`)
    `experts.gate_up_proj` [E, 2I, H] into `switch_mlp.gate_proj` / `up_proj` (gate rows first),
    rename `experts.down_proj`, drop `mtp.*`. As submitted it only loads pre-converted checkpoints.
 6. **`quant_predicate` arity.** mlx-lm calls `predicate(path, module)`; the PR defines three args.
+7. **`model_file` loader vs `from __future__ import annotations`** (mlx-lm `utils.load_model`): the
+   custom module is executed via `spec.loader.exec_module` without being registered in
+   `sys.modules`, so any `@dataclass` in a file that uses postponed annotations fails in
+   `dataclasses._is_type` (`sys.modules.get(cls.__module__)` is `None`). The PR file has that
+   import; a checkpoint bundling it as `model_file` cannot load until the import is removed (or
+   the loader does `sys.modules[spec.name] = module` before `exec_module`).
