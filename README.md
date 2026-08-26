@@ -5,7 +5,7 @@ MLX (Apple Silicon) runtime and quantization tooling for
 hybrid Gated-DeltaNet / Qwen-Sparse-Attention MoE with gated residual streams and a 51B-parameter
 hashed n-gram embedding (`model_type: qwen4_exp`).
 
-Published builds: **[pipenetwork/Qwen3.8-Flash-Next MLX](https://huggingface.co/collections/pipenetwork)**
+Published builds: **[pipenetwork/Qwen3.8-Flash-Next MLX](https://huggingface.co/collections/pipenetwork/qwen38-flash-next-mlx-6a8f26fa7137017a3b323c5b)**
 (8-bit, 6-bit, mixed 4/8-bit, 4-bit; see [Measurements](#measurements)).
 
 ## Why this exists
