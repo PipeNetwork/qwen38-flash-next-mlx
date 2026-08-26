@@ -96,7 +96,15 @@ norm fold is gated on raw-HF markers so it cannot be applied twice.
 every build on the same 145 windows of 2048 tokens; `scripts/ppl_compare.py` does the paired
 bootstrap. Results are in the model cards and below.
 
-MEASUREMENTS_TABLE
+<!-- measurements -->
+| build | size | perplexity | ΔNLL/token vs bf16 [95% CI] | windows worse |
+|---|---:|---:|---|---:|
+| bfloat16 (upstream) | 360.0 GB | 4.4708 | — | — |
+| [8bit](https://huggingface.co/pipenetwork/Qwen3.8-Flash-Next-MLX-8bit) | 192.2 GB | 4.4749 | +0.0009 [−0.0003, +0.0021] | 73/145 |
+| [6bit](https://huggingface.co/pipenetwork/Qwen3.8-Flash-Next-MLX-6bit) | 148.0 GB | 4.4767 | +0.0013 [−0.0003, +0.0029] | 81/145 |
+| [mixed-4_8bit](https://huggingface.co/pipenetwork/Qwen3.8-Flash-Next-MLX-mixed-4_8bit) | 106.2 GB | 4.5286 | +0.0128 [+0.0109, +0.0148] | 128/145 |
+| [4bit](https://huggingface.co/pipenetwork/Qwen3.8-Flash-Next-MLX-4bit) | 103.8 GB | 5.3914 | +0.1872 [+0.1778, +0.1968] | 145/145 |
+<!-- /measurements -->
 
 ## Layout
 

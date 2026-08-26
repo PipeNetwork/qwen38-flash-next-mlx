@@ -110,6 +110,8 @@ Read the interval, not the point estimate: an interval that straddles zero is a 
 statistically indistinguishable from bfloat16 on this corpus; "windows worse" counts how many of
 the {windows} windows the build lost outright.
 
+{recommendation}
+
 Greedy generation (a collapse detector, not a ranking) is coherent on every published build.
 
 ## License
@@ -124,6 +126,7 @@ def main() -> int:
     parser.add_argument("--repo", required=True)
     parser.add_argument("--results", default=str(ROOT / "ppl_results.json"))
     parser.add_argument("--yes", action="store_true")
+    parser.add_argument("--card-only", action="store_true", help="push only README.md (re-rendered)")
     args = parser.parse_args()
 
     d = Path(args.dir)
@@ -145,11 +148,23 @@ def main() -> int:
     res = json.load(open(args.results))
     a = res[ANCHOR]
     table = markdown(rows(args.results, ANCHOR, ORDER, sizes, LABELS), "bf16")
+    ppl = {n: res[n]["perplexity"] for n in ORDER if n in res}
+    pct = lambda n: 100 * (ppl[n] / ppl[ANCHOR] - 1)
+    recommendation = ""
+    if all(n in ppl for n in ORDER):
+        m, u = "Qwen3.8-Flash-Next-MLX-mixed-4_8bit", "Qwen3.8-Flash-Next-MLX-4bit"
+        recommendation = (
+            f"**The mixed 4/8-bit build is the one to use at this size.** Routed experts are 96.6% of the "
+            f"parameters, yet quantizing everything to 4-bit costs {pct(u):+.1f}% while keeping only the ~3% of "
+            f"non-expert weights (attention, DeltaNet, hyper-connections, shared experts, embeddings) at 8-bit "
+            f"brings that to {pct(m):+.1f}% for {sizes[m]-sizes[u]:.1f} GB more — the uniform 4-bit build is "
+            f"dominated and is published for completeness. 6-bit and 8-bit are statistically indistinguishable "
+            f"from bfloat16 on this corpus.")
 
     card = CARD.format(upstream=UPSTREAM, code_repo=CODE_REPO, pr=PR, repo_name=args.repo.split("/")[-1],
                        bits_tag=f"{expert_bits}-bit", recipe=recipe, gb=gb, expert_bits=expert_bits,
                        ngram_bits=ngram_bits, other_bits=other_bits, tokens=a["tokens"], windows=a["windows"],
-                       seq=a["seq_len"], table=table)
+                       seq=a["seq_len"], table=table, recommendation=recommendation)
     (d / "README.md").write_text(card)
     files = sorted(p.name for p in d.iterdir() if p.is_file())
     print(f"repo   {args.repo}\ndir    {d}\nfiles  {len(files)}, {gb:.1f} GB\n")
@@ -159,6 +174,10 @@ def main() -> int:
         return 0
     from huggingface_hub import HfApi
     api = HfApi()
+    if args.card_only:
+        api.upload_file(path_or_fileobj=str(d / "README.md"), path_in_repo="README.md", repo_id=args.repo, repo_type="model")
+        print(f"\ncard refreshed https://huggingface.co/{args.repo}")
+        return 0
     api.create_repo(args.repo, exist_ok=True, repo_type="model")
     api.upload_folder(folder_path=str(d), repo_id=args.repo, repo_type="model")
     print(f"\nuploaded https://huggingface.co/{args.repo}")

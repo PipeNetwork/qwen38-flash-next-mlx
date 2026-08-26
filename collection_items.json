@@ -1,0 +1,4 @@
+[["pipenetwork/Qwen3.8-Flash-Next-MLX-8bit", "192 GB. Indistinguishable from bf16: ppl 4.4749 vs 4.4708, paired ratio 1.0009 [0.9997, 1.0021], better on 50% of windows."],
+ ["pipenetwork/Qwen3.8-Flash-Next-MLX-6bit", "148 GB. Indistinguishable from bf16: ppl 4.4767, paired ratio 1.0013 [0.9997, 1.0029], better on 44% of windows."],
+ ["pipenetwork/Qwen3.8-Flash-Next-MLX-mixed-4_8bit", "106 GB. ppl 4.5286 (+1.3%): 4-bit experts and n-gram tables, 8-bit for the 3% of non-expert weights. The build to use at this size."],
+ ["pipenetwork/Qwen3.8-Flash-Next-MLX-4bit", "104 GB. ppl 5.3914 (+20.6%): the non-expert 3% at 4-bit costs 19 points of perplexity. Dominated by mixed-4_8bit for 2.4 GB more."]]

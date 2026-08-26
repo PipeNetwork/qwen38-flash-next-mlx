@@ -53,6 +53,9 @@ def recipe(path: str, args) -> dict | None:
         return None
     if ".ngram_embedding.shard_" in path:
         return {"group_size": args.ngram_group_size, "bits": args.ngram_bits}
+    for sub, bits in (args.override or []):
+        if sub in path:
+            return {"group_size": args.group_size, "bits": bits}
     if ".switch_mlp." in path:
         return {"group_size": args.group_size, "bits": args.expert_bits}
     return {"group_size": args.group_size, "bits": args.other_bits}
@@ -110,7 +113,10 @@ def main() -> int:
     ap.add_argument("--ngram-group-size", type=int, default=32)
     ap.add_argument("--shard-gb", type=float, default=10.0)
     ap.add_argument("--limit-shards", type=int, default=0)
+    ap.add_argument("--override", action="append", metavar="SUBSTRING=BITS",
+                    help="bits for modules whose path contains SUBSTRING (ablations); may repeat")
     args = ap.parse_args()
+    args.override = [(o.split("=")[0], int(o.split("=")[1])) for o in (args.override or [])]
     args.expert_bits = args.expert_bits or args.bits
     args.other_bits = args.other_bits or args.bits
     args.ngram_bits = args.ngram_bits or args.bits
